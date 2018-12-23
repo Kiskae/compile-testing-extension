@@ -5,7 +5,23 @@ A JUnit5 Extension implementation of [`google/compile-testing`](https://github.c
 
 ## Usage
 
-#### TODO: add gradle coordinates
+This library is available on `jcenter`:
+
+```kotlin
+repositories {
+    jcenter()
+}
+
+dependencies {
+    // JUnit API and Engine
+    testImplementation(platform("org.junit:junit-bom:5.3.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    
+    // CompilationExtension
+    testImplementation("net.serverpeon.testing.compile:compile-testing-extension:1.0.0")
+}
+```
 
 This extension uses JUnit5's native `ParameterResolver` to make the `java.lang.model` utility types available
 for any of the usual injection targets. Check out [JUnit5 / User Guide / Dependency Injection for Constructors and Methods ](https://junit.org/junit5/docs/current/user-guide/#writing-tests-dependency-injection)

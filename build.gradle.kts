@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "net.serverpeon.testing.compile"
-version = "1.0.0"
+version = "1.0.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -34,7 +34,7 @@ bintray {
 
     setPublications("Bintray")
 
-    dryRun = true
+    dryRun = (project.version as? String)?.endsWith("SNAPSHOT") ?: true
 
     pkg.apply {
         repo = "maven"
@@ -47,8 +47,7 @@ bintray {
         githubRepo = "Kiskae/compile-testing-extension"
 
         version.apply {
-            name = "1.0.0"
-            vcsTag = "1.0.0"
+            name = project.version.toString()
             released = Date().toString()
         }
     }
