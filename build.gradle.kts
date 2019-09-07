@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.google.testing.compile:compile-testing:0.15")
+    implementation("com.google.testing.compile:compile-testing:0.18")
 
     // jUnit5 API
     api(platform("org.junit:junit-bom:5.3.2"))
