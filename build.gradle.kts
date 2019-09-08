@@ -63,7 +63,7 @@ val sourcesJar by tasks.creating(Jar::class) {
 tasks.withType<Javadoc>().configureEach {
     (options as StandardJavadocDocletOptions).apply {
         // External APIs
-        links("https://docs.oracle.com/javase/8/docs/api/")
+        links("https://docs.oracle.com/en/java/javase/12/docs/api/")
         linksOffline(
                 "https://junit.org/junit5/docs/current/api/",
                 file("src/javadoc/junit5").absolutePath
