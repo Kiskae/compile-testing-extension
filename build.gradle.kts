@@ -1,9 +1,11 @@
 plugins {
     `java-library`
     `maven-publish`
+    `signing`
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
-group = "net.serverpeon.testing.compile"
+group = "io.github.kiskae"
 version = "1.0.2-SNAPSHOT"
 
 repositories {
@@ -61,13 +63,26 @@ tasks {
     }
 }
 
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
 
+            val projectUrl = "github.com/kiskae/compile-testing-extension"
+
             pom {
-                url.set("https://github.com/Kiskae/compile-testing-extension")
+                name.set(project.name)
+                description.set("JUnit5 extension based on Google's \"compile-testing\" library")
+                url.set("https://$projectUrl")
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
@@ -76,14 +91,29 @@ publishing {
                 }
 
                 issueManagement {
-                    url.set("https://github.com/Kiskae/compile-testing-extension/issues")
+                    url.set("https://$projectUrl/issues")
+                }
+
+                developers {
+                    developer {
+                        id.set("kiskae")
+                        name.set("Jeroen van Leusen")
+                        email.set("jvleusen@gmail.com")
+                        url.set("https://github.com/kiskae")
+                    }
                 }
                 
                 scm {
-                    connection.set("scm:git:git://github.com/Kiskae/compile-testing-extension.git")
-                    url.set("https://github.com/Kiskae/compile-testing-extension")
+                    connection.set("scm:git:git://$projectUrl.git")
+                    developerConnection.set("scm:git:git://$projectUrl.git")
+                    url.set("https://$projectUrl")
                 }
             }
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications["mavenJava"])
 }
