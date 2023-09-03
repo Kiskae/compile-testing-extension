@@ -3,10 +3,10 @@ plugins {
     `maven-publish`
     `signing`
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("net.researchgate.release") version "3.0.2"
 }
 
 group = "io.github.kiskae"
-version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -116,4 +116,8 @@ publishing {
 signing {
     useGpgCmd()
     sign(publishing.publications["mavenJava"])
+}
+
+release {
+    git.requireBranch.set("master")
 }
