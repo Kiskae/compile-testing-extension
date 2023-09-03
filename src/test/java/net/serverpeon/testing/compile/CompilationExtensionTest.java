@@ -47,7 +47,7 @@ class CompilationExtensionTest {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         final CompilationExtension.CompilerState state = new CompilationExtension.CompilerState(
                 executor,
-                TestInstance.Lifecycle.PER_CLASS
+                "dummy_uid"
         );
         executor.shutdown(); // Allow executor to finish with the compiler
 

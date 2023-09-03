@@ -1,12 +1,6 @@
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
-import java.util.EnumSet
-import java.util.Date
-
 plugins {
     `java-library`
     `maven-publish`
-    id("com.jfrog.bintray") version "1.8.4"
 }
 
 group = "net.serverpeon.testing.compile"
@@ -14,7 +8,6 @@ version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
@@ -23,89 +16,74 @@ dependencies {
     // jUnit5 API
     api(platform("org.junit:junit-bom:5.3.2"))
     api("org.junit.jupiter:junit-jupiter-api")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-bintray {
-    user = (project.findProperty("bintrayUser")
-            ?: System.getenv("BINTRAY_USER"))?.toString()
-    key = (project.findProperty("bintrayApiKey")
-            ?: System.getenv("BINTRAY_API_KEY"))?.toString()
+java {
+    withJavadocJar()
+    withSourcesJar()
 
-    setPublications("Bintray")
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 
-    dryRun = (project.version as? String)?.endsWith("SNAPSHOT") ?: true
+tasks {
+    withType<Test> {
+        useJUnitPlatform()
 
-    pkg.apply {
-        repo = "maven"
-        name = "compile-testing-extension"
-        setLicenses("Apache-2.0")
-        websiteUrl = "https://github.com/Kiskae/compile-testing-extension"
-        issueTrackerUrl = "https://github.com/Kiskae/compile-testing-extension/issues"
-        vcsUrl = "https://github.com/Kiskae/compile-testing-extension.git"
-
-        githubRepo = "Kiskae/compile-testing-extension"
-
-        version.apply {
-            name = project.version.toString()
-            released = Date().toString()
+        testLogging {
+            events("passed", "skipped", "failed")
         }
     }
-}
 
-val sourcesJar by tasks.creating(Jar::class) {
-    dependsOn("classes")
-
-    classifier = "sources"
-    from(sourceSets["main"].allSource)
-}
-
-tasks.withType<Javadoc>().configureEach {
-    (options as StandardJavadocDocletOptions).apply {
-        // External APIs
-        links("https://docs.oracle.com/en/java/javase/12/docs/api/")
-        linksOffline(
-                "https://junit.org/junit5/docs/current/api/",
-                file("src/javadoc/junit5").absolutePath
-        )
-
-        // No part of the library is deprecated, so this is entirely redundant
-        noDeprecatedList(true)
+    withType<JavaCompile> {
+        options.release.set(8)
     }
-}
 
-val javadocJar by tasks.creating(Jar::class) {
-    dependsOn("javadoc")
+    withType<Javadoc> {
+        (options as StandardJavadocDocletOptions).apply {
+            // External APIs
+            links("https://docs.oracle.com/en/java/javase/20/docs/api/")
+            linksOffline(
+                    "https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/",
+                    file("src/javadoc/junit5").absolutePath
+            )
 
-    classifier = "javadoc"
-    from(tasks["javadoc"])
-}
+            // No part of the library is deprecated, so this is entirely redundant
+            noDeprecatedList(true)
 
-operator fun <T> Property<T>.invoke(value: T) {
-    this.set(value)
+            if (JavaVersion.current().isJava9Compatible) {
+                addBooleanOption("html5", true)
+            }
+        }
+    }
 }
 
 publishing {
     publications {
-        register("Bintray", MavenPublication::class.java) {
+        create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(sourcesJar)
-            artifact(javadocJar)
 
-            pom.licenses {
-                license {
-                    name("The Apache License, Version 2.0")
-                    url("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            pom {
+                url.set("https://github.com/Kiskae/compile-testing-extension")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
                 }
-            }
 
-            pom.scm {
-                url("https://github.com/Kiskae/compile-testing-extension")
+                issueManagement {
+                    url.set("https://github.com/Kiskae/compile-testing-extension/issues")
+                }
+                
+                scm {
+                    connection.set("scm:git:git://github.com/Kiskae/compile-testing-extension.git")
+                    url.set("https://github.com/Kiskae/compile-testing-extension")
+                }
             }
         }
     }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
 }

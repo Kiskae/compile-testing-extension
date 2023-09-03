@@ -114,51 +114,45 @@ public class CompilationExtension implements BeforeAllCallback, BeforeEachCallba
         this(DEFAULT_COMPILER_EXECUTOR);
     }
 
-    @Override
-    public void beforeAll(ExtensionContext context) throws InterruptedException {
+    private void setupState(ExtensionContext context) throws InterruptedException  {
         final CompilerState state = context.getStore(NAMESPACE).getOrComputeIfAbsent(
                 CompilerState.class,
-                ignored -> new CompilerState(this.compilerExecutor, TestInstance.Lifecycle.PER_CLASS),
+                ignored -> new CompilerState(this.compilerExecutor, context.getUniqueId()),
                 CompilerState.class
         );
 
         checkState(state.prepareForTests(), state);
     }
 
-    @Override
-    public void beforeEach(ExtensionContext context) throws InterruptedException {
-        final CompilerState state = context.getStore(NAMESPACE).getOrComputeIfAbsent(
-                CompilerState.class,
-                ignored -> new CompilerState(this.compilerExecutor, TestInstance.Lifecycle.PER_METHOD),
-                CompilerState.class
-        );
-
-        checkState(state.prepareForTests(), state);
-    }
-
-    @Override
-    public void afterEach(ExtensionContext context) throws Exception {
+    private void teardownState(ExtensionContext context) throws ExecutionException, InterruptedException  {
         final CompilerState state = checkNotNull(context.getStore(NAMESPACE).get(
                 CompilerState.class,
                 CompilerState.class
         ));
 
-        state.terminateIfLifecycle(TestInstance.Lifecycle.PER_METHOD).ifPresent(compilation ->
+        state.terminateIfOwner(context.getUniqueId()).ifPresent(compilation ->
                 checkState(compilation.status().equals(SUCCESS), compilation)
         );
     }
 
     @Override
-    public void afterAll(ExtensionContext context) throws ExecutionException, InterruptedException {
-        final CompilerState state = checkNotNull(context.getStore(NAMESPACE).get(
-                CompilerState.class,
-                CompilerState.class
-        ));
+    public void beforeAll(ExtensionContext context) throws Exception {
+        this.setupState(context);
+    }
 
-        final Compilation compilation = state.terminateIfLifecycle(TestInstance.Lifecycle.PER_CLASS)
-                .orElseGet(() -> fail("Mismatched beforeAll/afterAll lifecycle"));
+    @Override
+    public void beforeEach(ExtensionContext context) throws Exception {
+        this.setupState(context);
+    }
 
-        checkState(compilation.status().equals(SUCCESS), compilation);
+    @Override
+    public void afterEach(ExtensionContext context) throws Exception {
+        this.teardownState(context);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        this.teardownState(context);
     }
 
     @Override
@@ -194,10 +188,10 @@ public class CompilationExtension implements BeforeAllCallback, BeforeEachCallba
         private final AtomicReference<ProcessingEnvironment> sharedState;
         private final Phaser syncBarrier;
         private final CompletableFuture<Compilation> result;
-        private final TestInstance.Lifecycle lifecycle;
+        private final String creatorUid;
 
-        CompilerState(Executor compilerExecutor, TestInstance.Lifecycle lifecycle) {
-            this.lifecycle = lifecycle;
+        CompilerState(Executor compilerExecutor, String creatorUid) {
+            this.creatorUid = creatorUid;
             this.sharedState = new AtomicReference<>(null);
             this.syncBarrier = new Phaser(2) {
                 @Override
@@ -239,10 +233,10 @@ public class CompilationExtension implements BeforeAllCallback, BeforeEachCallba
             }
         }
 
-        // Guarded to match the lifecycle used by the extension
-        Optional<Compilation> terminateIfLifecycle(TestInstance.Lifecycle lifecycle)
+        // Guarded to match the context that initialized the extension
+        Optional<Compilation> terminateIfOwner(String currentUid)
                 throws InterruptedException, ExecutionException {
-            if (this.lifecycle == lifecycle) {
+            if (this.creatorUid.equals(currentUid)) {
                 return Optional.of(allowTermination());
             } else {
                 return Optional.empty();
@@ -294,8 +288,12 @@ public class CompilationExtension implements BeforeAllCallback, BeforeEachCallba
 
         @Override
         public void close() {
-            // If the owning ExtensionContext.Store is closed, ensure the compilation terminates as well
-            this.syncBarrier.forceTermination();
+            if (!this.syncBarrier.isTerminated()) {
+                // If the owning ExtensionContext.Store is closed, ensure the compilation terminates as well
+                this.syncBarrier.forceTermination();
+
+                fail("Mismatched setup/teardown.");
+            }
         }
 
         @Override
@@ -304,7 +302,7 @@ public class CompilationExtension implements BeforeAllCallback, BeforeEachCallba
                     "sharedState=" + sharedState +
                     ", syncBarrier=" + syncBarrier +
                     ", result=" + result +
-                    ", lifecycle=" + lifecycle +
+                    ", creatorUid=" + creatorUid +
                     '}';
         }
     }
