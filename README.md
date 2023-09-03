@@ -1,15 +1,15 @@
-# compile-testing-extension [ ![Download](https://api.bintray.com/packages/kiskae/maven/compile-testing-extension/images/download.svg) ](https://bintray.com/kiskae/maven/compile-testing-extension/_latestVersion)
+# compile-testing-extension <!-- [ ![Download](https://api.bintray.com/packages/kiskae/maven/compile-testing-extension/images/download.svg) ](https://bintray.com/kiskae/maven/compile-testing-extension/_latestVersion) -->
 
 A JUnit5 Extension implementation of [`google/compile-testing`](https://github.com/google/compile-testing)'s JUnit4 
 [`CompilationRule`](https://github.com/google/compile-testing/blob/master/src/main/java/com/google/testing/compile/CompilationRule.java) rule.
 
 ## Usage
 
-This library is available on `jcenter`:
+This library is available on `mavenCentral`:
 
 ```kotlin
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -19,7 +19,7 @@ dependencies {
     testRuntime("org.junit.jupiter:junit-jupiter-engine")
     
     // CompilationExtension
-    testImplementation("net.serverpeon.testing.compile:compile-testing-extension:1.0.0")
+    testImplementation("io.github.kiskae:compile-testing-extension:1.0.2")
 }
 ```
 
