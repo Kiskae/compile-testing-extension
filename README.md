@@ -1,4 +1,4 @@
-# compile-testing-extension <!-- [ ![Download](https://api.bintray.com/packages/kiskae/maven/compile-testing-extension/images/download.svg) ](https://bintray.com/kiskae/maven/compile-testing-extension/_latestVersion) -->
+# compile-testing-extension [![Maven Central](https://img.shields.io/maven-central/v/io.github.kiskae/compile-testing-extension.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.kiskae%22%20AND%20a:%22compile-testing-extension%22)
 
 A JUnit5 Extension implementation of [`google/compile-testing`](https://github.com/google/compile-testing)'s JUnit4 
 [`CompilationRule`](https://github.com/google/compile-testing/blob/master/src/main/java/com/google/testing/compile/CompilationRule.java) rule.
